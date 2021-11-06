@@ -16,6 +16,13 @@ class User(
 
     var password: String,
 
-    var token: String,
+    var token: String?,
 
-    var expiration: Int)
+    var expiration: Long?
+)
+
+@Entity
+class List(
+    @Id
+    var id: String
+)
