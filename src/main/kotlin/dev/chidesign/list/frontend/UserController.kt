@@ -1,9 +1,6 @@
 package dev.chidesign.list.frontend
 
-import dev.chidesign.list.LoginInfo
-import dev.chidesign.list.User
-import dev.chidesign.list.UserInfo
-import dev.chidesign.list.UserRepository
+import dev.chidesign.list.core.*
 import dev.chidesign.list.facades.UserFacade
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*

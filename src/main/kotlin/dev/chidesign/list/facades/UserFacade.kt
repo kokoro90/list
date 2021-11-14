@@ -1,6 +1,8 @@
 package dev.chidesign.list.facades
 
-import dev.chidesign.list.*
+import dev.chidesign.list.core.*
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.CacheManager
 import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.random.Random
@@ -8,10 +10,13 @@ import kotlin.random.Random
 @Service
 class UserFacade(private val repository: UserRepository) {
 
+    @Autowired
+    lateinit var cacheManager: CacheManager
+
     fun getUsers(lastName: String?): List<UserInfo> {
         val result = ArrayList<UserInfo>()
 
-        val users = if(null == lastName) repository.findByVisible() else repository.findByLastName(lastName)
+        val users = if (null == lastName) repository.findByVisible() else repository.findByLastName(lastName)
 
         for (user in users) {
             result.add(user.toUserInfo())
@@ -43,22 +48,35 @@ class UserFacade(private val repository: UserRepository) {
                 user.token = token
                 user.expiration = expiration
                 repository.save(user)
+                cacheManager.getCache("authcache")?.put(token, expiration.toString())
             }
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+        }
 
         return token
     }
 
     fun validateToken(token: String): Boolean {
         var isValid = false
-
-        val user = repository.getUserByToken(token)
         val now: Long = Calendar.getInstance().time.time / 1000
+        var expiration: Long
 
-        if(user?.expiration != null && now < user.expiration!!) {
-            user.expiration = now + 1800
-            repository.save(user)
-            isValid = true
+        try {
+            expiration = cacheManager.getCache("authcache")?.get(token)?.get().toString().toLong()
+
+            if (now < expiration) {
+                isValid = true
+
+                if (expiration - now > 300) {
+                    val user = repository.getUserByToken(token)
+
+                    if (null != user) {
+                        user.expiration = now + 1800
+                        repository.save(user)
+                    }
+                }
+            }
+        } catch (e: Exception) {
         }
 
         return isValid

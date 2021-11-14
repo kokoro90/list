@@ -1,4 +1,4 @@
-package dev.chidesign.list
+package dev.chidesign.list.core
 
 import java.security.MessageDigest
 
